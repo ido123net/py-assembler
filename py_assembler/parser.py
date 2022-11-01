@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from enum import Enum
 
-from py_assembler.instruction import Instruction
+from py_assembler.instruction import InstructionLine
 from py_assembler.instruction import INSTRUCTIONS
 
 
@@ -34,10 +34,10 @@ def is_valid_label(label: str) -> bool:
     return re.compile(r"[a-zA-Z][a-zA-Z0-9]*").match(label) is not None
 
 
-def instruction_line_parse(instruction_line: str) -> Instruction:
+def instruction_line_parse(instruction_line: str) -> InstructionLine:
     if ":" in instruction_line:
         label, _, instruction = instruction_line.partition(":")
     else:
         label, instruction = None, instruction_line
     cmd, *args = re.split(r"[\s,]+", instruction.strip())
-    return Instruction(label, cmd, args)
+    return InstructionLine(label, cmd, args)

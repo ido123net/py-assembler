@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from py_assembler.instruction import Instruction
+from py_assembler.instruction import get_instruction_type
+from py_assembler.instruction import InstructionLine
+from py_assembler.instruction import InstuctionType
+from py_assembler.instruction import InvalidInsrtuction
 from py_assembler.parser import instruction_line_parse
 from py_assembler.parser import is_valid_label
 from py_assembler.parser import line_type
@@ -65,33 +68,77 @@ def test_is_valid_label(input_s, expected):
     (
         (
             "MAIN:   add     $3,$5,$9",
-            Instruction("MAIN", "add", ["$3", "$5", "$9"]),
+            InstructionLine("MAIN", "add", ["$3", "$5", "$9"]),
         ),
         (
             "LOOP:   ori     $9,-5,$2",
-            Instruction("LOOP", "ori", ["$9", "-5", "$2"]),
+            InstructionLine("LOOP", "ori", ["$9", "-5", "$2"]),
         ),
         (
             "la val1",
-            Instruction(None, "la", ["val1"]),
+            InstructionLine(None, "la", ["val1"]),
         ),
         (
             "   jmp	   Next",
-            Instruction(None, "jmp", ["Next"]),
+            InstructionLine(None, "jmp", ["Next"]),
         ),
         (
             "Next:   move    $20,$4",
-            Instruction("Next", "move", ["$20", "$4"]),
+            InstructionLine("Next", "move", ["$20", "$4"]),
         ),
         (
             "	bgt	$4,	$2,	END",
-            Instruction(None, "bgt", ["$4", "$2", "END"]),
+            InstructionLine(None, "bgt", ["$4", "$2", "END"]),
         ),
         (
             "END:    stop",
-            Instruction("END", "stop", []),
+            InstructionLine("END", "stop", []),
         ),
     ),
 )
 def test_instruction_line_parse(input_s, expected):
     assert instruction_line_parse(input_s) == expected
+
+
+@pytest.mark.parametrize(
+    ("instruction_line", "instruction_type"),
+    (
+        (
+            InstructionLine("MAIN", "add", ["$3", "$5", "$9"]),
+            InstuctionType.R,
+        ),
+        (
+            InstructionLine("LOOP", "ori", ["$9", "-5", "$2"]),
+            InstuctionType.I,
+        ),
+        (
+            InstructionLine(None, "la", ["val1"]),
+            InstuctionType.J,
+        ),
+    ),
+)
+def test_instruction_line_type(instruction_line, instruction_type):
+    assert get_instruction_type(instruction_line) == instruction_type
+
+
+@pytest.mark.parametrize(
+    ("instruction", "expected"),
+    (
+        (
+            "NotInstruction",
+            "'NotInstruction' is not valid instruction!",
+        ),
+        (
+            "Add",
+            "'Add' is not valid instruction!",
+        ),
+        (
+            "ADD",
+            "'ADD' is not valid instruction!",
+        ),
+    ),
+)
+def test_invalid_instruction(instruction, expected):
+    with pytest.raises(InvalidInsrtuction) as excinfo:
+        get_instruction_type(InstructionLine(None, instruction, []))
+    assert str(excinfo.value) == expected
