@@ -35,6 +35,14 @@ J_INSTRUCTIONS = (
     "call",
     "stop",
 )
+DB_INSTRUCTIONS = (
+    ".dh",
+    ".dw",
+    ".db",
+    ".asciz",
+)
+ENTRY_INSTRUCTIONS = (".entry",)
+EXTERN_INSTRUCTIONS = (".extern",)
 
 INSTRUCTIONS = (R_INSTRUCTIONS, I_INSTRUCTIONS, J_INSTRUCTIONS)
 
@@ -44,9 +52,12 @@ class InvalidInsrtuction(Exception):
 
 
 class InstuctionType(Enum):
-    R = 0
-    I = 1  # noqa: E741
-    J = 2
+    RI = "R instruction"
+    II = "I instruction"
+    JI = "J instruction"
+    DB = "DB instruction"
+    ENTRY = "Entry instruction"
+    EXTERN = "Extern instruction"
 
 
 @dataclass
@@ -88,9 +99,15 @@ class JInstruct(Instruct):
 def get_instruction_type(instruction_line: InstructionLine) -> InstuctionType:
     instruct = instruction_line.instruction
     if instruct in R_INSTRUCTIONS:
-        return InstuctionType.R
+        return InstuctionType.RI
     if instruct in I_INSTRUCTIONS:
-        return InstuctionType.I
+        return InstuctionType.II
     if instruct in J_INSTRUCTIONS:
-        return InstuctionType.J
+        return InstuctionType.JI
+    if instruct in DB_INSTRUCTIONS:
+        return InstuctionType.DB
+    if instruct in ENTRY_INSTRUCTIONS:
+        return InstuctionType.ENTRY
+    if instruct in J_INSTRUCTIONS:
+        return InstuctionType.EXTERN
     raise InvalidInsrtuction(f"{instruct!r} is not valid instruction!")

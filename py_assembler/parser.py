@@ -1,10 +1,24 @@
 from __future__ import annotations
 
+import logging
 import re
 from enum import Enum
+from typing import Any
 
-from py_assembler.instruction import InstructionLine
-from py_assembler.instruction import INSTRUCTIONS
+logger = logging.getLogger(__name__)
+
+pattern = re.compile(
+    r"^(?:([a-zA-Z][a-zA-Z0-9]{0,30}):\s)?\s*(\.?[\w]+)(?:\s+([\"\$0-9\,a-zA-Z\s-]*))?$",
+)
+
+
+class InvalidLine(Exception):
+    def __init__(self, line: str, *args: object) -> None:
+        self.line = line
+        super().__init__(*args)
+
+    def __str__(self) -> str:
+        return f"{self.line!r} is not following the requirements."
 
 
 class LineType(Enum):
@@ -23,21 +37,8 @@ def line_type(line: str) -> LineType:
         return LineType.INSTRUCTION
 
 
-def is_valid_label(label: str) -> bool:
-    if len(label) > 31 or len(label.split()) != 1:
-        return False
-
-    for instruction_type in INSTRUCTIONS:
-        if label in instruction_type:
-            return False
-
-    return re.compile(r"[a-zA-Z][a-zA-Z0-9]*").match(label) is not None
-
-
-def instruction_line_parse(instruction_line: str) -> InstructionLine:
-    if ":" in instruction_line:
-        label, _, instruction = instruction_line.partition(":")
-    else:
-        label, instruction = None, instruction_line
-    cmd, *args = re.split(r"[\s,]+", instruction.strip())
-    return InstructionLine(label, cmd, args)
+def split_line(line: str) -> tuple[str | Any, ...]:
+    match = pattern.search(line.strip())
+    if match is None:
+        raise InvalidLine(line)
+    return match.groups()
